@@ -1,0 +1,15 @@
+{
+  "name": "rc-panel",
+  "description": "RC Panel, a Claude Code mod that shows which desktop sessions have Remote Control on and turns them off.",
+  "owner": {
+    "name": "이원찬",
+    "url": "https://github.com/dshw1234-dot"
+  },
+  "plugins": [
+    {
+      "name": "rc-panel",
+      "source": "./",
+      "description": "A side panel that lists your Claude desktop sessions with Remote Control on, and turns them off one by one or all at once."
+    }
+  ]
+}
