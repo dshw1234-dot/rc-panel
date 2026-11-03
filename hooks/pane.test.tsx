@@ -130,6 +130,8 @@ test('상태 줄에 RC 버튼을 그리고, 설정에서 숨기면 아래 mod의
   const band = await $.ui.mount({ ...MODE, surface: 'desktop' })
   expect((await band.find({ type: 'Button', key: 'rc-toggle' }))?.props.label).toBe('RC')
   expect((await band.find({ type: 'Button', key: 'toggle-pane' }))?.props.label).toBe('◨')
+  // 어느 mod가 먼저 불려도 ◨ 다음에 RC가 온다
+  expect((await band.findAll({ type: 'Button' })).map(b => b.props?.key)).toEqual(['toggle-pane', 'rc-toggle'])
 
   const pane = await $.ui.mount({ ...PANE, surface: 'desktop' })
   await pane.press({ key: 'settings' })
@@ -145,5 +147,24 @@ test('상태 줄에 RC 버튼을 그리고, 설정에서 숨기면 아래 mod의
   expect(stored.at(-1)).toBe(false)
   expect(await band.find({ type: 'Button', key: 'rc-toggle' })).toBeTruthy()
   await pane.unmount()
+  await band.unmount()
+})
+
+test('session-tree가 줄로 그린 상태 줄에서도 ◨ 바로 뒤에 RC를 놓는다', async ($, on) => {
+  on('ui.render', ($$, e) => {
+    const { Box, Button, Text } = $$.ui.resolve(e)
+
+    return (
+      <Box flexDirection="row">
+        <Button key="toggle-pane" label="◨" onPress={() => {}} />
+        <Text>모드</Text>
+      </Box>
+    )
+  })
+  on('store.get', () => ({ value: undefined }))
+
+  const band = await $.ui.mount({ ...MODE, surface: 'desktop' })
+  expect((await band.findAll({ type: 'Button' })).map(b => b.props?.key)).toEqual(['toggle-pane', 'rc-toggle'])
+  expect(await band.find({ type: 'Text', text: /모드/ })).toBeTruthy()
   await band.unmount()
 })

@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, RenderElement, RenderNode } from 'claude-code'
 
 import type { Lang, NoteCode, RcRow } from '../types'
 import { STRINGS } from './strings'
@@ -262,6 +262,24 @@ async function start($: EngineInterface) {
   $.clock.every(REFRESH_MS, () => void quietRefresh($))
 }
 
+// mod를 불러오는 순서는 세션마다 달라서, session-tree(◨)가 아래에 깔려 있으면
+// 그 버튼 바로 뒤에 끼워 넣는다. 어느 순서로 불려도 '◨ RC'로 보이게 하려는 것.
+const TREE_BUTTON = 'toggle-pane'
+
+function isTreeButton(node: RenderNode | undefined) {
+  return !!node && typeof node !== 'string' && node.type === 'Button' && node.props.key === TREE_BUTTON
+}
+
+function placeAfterTree(below: unknown, button: RenderNode): RenderElement | undefined {
+  const tree = below as RenderNode | undefined
+  if (isTreeButton(tree)) return { type: 'Box', props: { flexDirection: 'row' }, children: [tree!, button] }
+  if (!tree || typeof tree === 'string' || tree.type !== 'Box') return undefined
+  const [first, ...rest] = tree.children ?? []
+  if (!isTreeButton(first)) return undefined
+
+  return { ...tree, children: [first!, button, ...rest] }
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await start($)
@@ -297,14 +315,18 @@ export const register: Register = on => {
     const count = (await read($, rows)).length
     const isOpen = await read($, isPaneOpen)
 
-    return (
+    const button = (
+      <Button
+        key="rc-toggle"
+        label={`RC${count ? ` ${count}` : ''}${isOpen ? ' ▾' : ''}`}
+        dimColor
+        onPress={() => background(togglePane($))}
+      />
+    )
+
+    return placeAfterTree(below, button) ?? (
       <Box flexDirection="row">
-        <Button
-          key="rc-toggle"
-          label={`RC${count ? ` ${count}` : ''}${isOpen ? ' ▾' : ''}`}
-          dimColor
-          onPress={() => background(togglePane($))}
-        />
+        {button}
         {below}
       </Box>
     )
