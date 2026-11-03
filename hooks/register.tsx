@@ -136,6 +136,11 @@ async function refresh($: EngineInterface, isQuiet: boolean) {
   await update($, note, () => (next.length ? null : ('empty' as const)))
 }
 
+// 1분마다 도는 갱신: 이미 허용된 도구만 불러 권한 창을 띄우지 않는다
+async function quietRefresh($: EngineInterface) {
+  await refresh($, true)
+}
+
 // 앱은 자기 세션을 'self'로 받는다
 async function turnOff($: EngineInterface, row: RcRow) {
   const result = await callTool(
@@ -253,8 +258,8 @@ async function start($: EngineInterface) {
     // 패널 목록을 못 읽으면 닫힌 것으로 본다
   }
   await update($, isPaneOpen, () => isOpen)
-  await refresh($, true)
-  $.clock.every(REFRESH_MS, () => void refresh($, true))
+  await quietRefresh($)
+  $.clock.every(REFRESH_MS, () => void quietRefresh($))
 }
 
 export const register: Register = on => {
