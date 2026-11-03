@@ -6,6 +6,10 @@ A side panel for the Claude desktop app that shows which of your sessions have R
 
 It is a Claude Code mod: it runs inside the desktop app and needs no server, account or API key.
 
+<img src="docs/screenshot.png" alt="RC Panel listing four sessions with Remote Control on, with the settings box open" width="390">
+
+*The screenshot uses the sample data from `/rc-panel demo`.*
+
 ## Features
 
 - **One list:** every session on this computer with Remote Control on, this session first.
@@ -35,7 +39,11 @@ claude plugin install rc-panel --marketplace dshw1234-dot/rc-panel
 
 In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `dshw1234-dot/rc-panel`, then Add plugin.
 
-Open a new session, and click `RC` below the prompt or type `/rc-panel`. The ⚙ button at the top right of the panel opens the settings: language, refresh, turn all off, and hide the icon below the prompt.
+Open a new session, and click `RC` below the prompt or type `/rc-panel`.
+
+<img src="docs/footer.png" alt="The RC button below the prompt, next to Session Tree's button and the model name" width="240">
+
+The ⚙ button at the top right of the panel opens the settings: language, refresh, turn all off, and hide the icon below the prompt.
 
 ## What it reads and sends
 

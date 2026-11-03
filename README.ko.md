@@ -6,6 +6,10 @@ Claude 데스크톱 앱에서 Remote Control이 켜진 세션을 한눈에 보�
 
 Claude Code mod라서 데스크톱 앱 안에서 돌아가고, 서버·계정·API 키가 필요 없습니다.
 
+<img src="docs/screenshot.png" alt="Remote Control이 켜진 세션 네 개와 열린 설정 상자를 보여 주는 RC Panel" width="390">
+
+*스크린샷은 `/rc-panel demo`의 예시 데이터입니다.*
+
 ## 기능
 
 - **목록 하나:** 이 컴퓨터에서 Remote Control이 켜진 세션을 모두 보여 줍니다. 지금 세션이 맨 위에 옵니다.
@@ -35,7 +39,11 @@ claude plugin install rc-panel --marketplace dshw1234-dot/rc-panel
 
 `/plugin`이 동작하지 않는 데스크톱 앱에서는 입력창 옆 + → Plugins → Add marketplace에 `dshw1234-dot/rc-panel`을 넣고 Add plugin을 누릅니다.
 
-새 세션을 열고 입력창 아래 `RC`를 누르거나 `/rc-panel`을 입력합니다. 패널 오른쪽 위 ⚙ 버튼을 누르면 설정(언어, 새로 고침, 모두 끄기, 입력창 아래 아이콘 숨기기)이 열립니다.
+새 세션을 열고 입력창 아래 `RC`를 누르거나 `/rc-panel`을 입력합니다.
+
+<img src="docs/footer.png" alt="입력창 아래 Session Tree 버튼과 모델 이름 사이의 RC 버튼" width="240">
+
+패널 오른쪽 위 ⚙ 버튼을 누르면 설정(언어, 새로 고침, 모두 끄기, 입력창 아래 아이콘 숨기기)이 열립니다.
 
 ## 읽는 것과 보내는 것
 
