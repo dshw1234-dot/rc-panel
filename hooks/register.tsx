@@ -203,7 +203,12 @@ async function resolveLang($: EngineInterface): Promise<Lang> {
   } catch {
     // 설정을 읽지 못하면 시스템 언어를 본다
   }
-  const system = await $.env.get('LANG').catch(() => undefined)
+  let system: string | undefined
+  try {
+    system = await $.env.get('LANG')
+  } catch {
+    system = undefined
+  }
 
   return system?.startsWith('ko') ? 'ko' : 'en'
 }
@@ -238,11 +243,16 @@ async function start($: EngineInterface) {
   isStarted = true
   const resolved = await resolveLang($)
   await update($, lang, () => resolved)
-  if ((await $.store.get(HIDE_ICON_KEY)) === true) {
-    await update($, isIconHidden, () => true)
+  const hidden = await $.store.get(HIDE_ICON_KEY)
+  if (hidden === true) await update($, isIconHidden, () => true)
+  let isOpen = false
+  try {
+    const panes = await $.ui.panes()
+    isOpen = panes.some(pane => pane.id === PANE)
+  } catch {
+    // 패널 목록을 못 읽으면 닫힌 것으로 본다
   }
-  const panes = await $.ui.panes().catch(() => [])
-  await update($, isPaneOpen, () => panes.some(pane => pane.id === PANE))
+  await update($, isPaneOpen, () => isOpen)
   await refresh($, true)
   $.clock.every(REFRESH_MS, () => void refresh($, true))
 }
