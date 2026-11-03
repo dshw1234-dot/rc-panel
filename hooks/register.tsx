@@ -147,13 +147,12 @@ async function quietRefresh($: EngineInterface) {
 
 // 끄기 버튼은 두지 않는다. mod가 쉬는 세션에서 set_remote_control을 부르면 앱이 승인 창을 띄우고,
 // 그 승인이 턴 밖이라 '작업 중' 시간 표시가 멈추지 않는다(데스크톱 4.4212). 그래서 그 세션으로 이동만 한다.
+// 데스크톱 앱은 Windows와 macOS에만 있다. Windows는 OS=Windows_NT를 늘 둔다.
 async function openSession($: EngineInterface, id: string) {
   if (!/^local_[0-9a-f-]+$/.test(id)) return
-  await $.process.run([
-    'rundll32',
-    'url.dll,FileProtocolHandler',
-    `claude://claude.ai/epitaxy/${id}`,
-  ])
+  const link = `claude://claude.ai/epitaxy/${id}`
+  const isWindows = (await $.env.get('OS').catch(() => undefined)) === 'Windows_NT'
+  await $.process.run(isWindows ? ['rundll32', 'url.dll,FileProtocolHandler', link] : ['open', link])
 }
 
 async function openPane($: EngineInterface) {

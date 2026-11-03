@@ -1,7 +1,7 @@
 {
   "name": "rc-panel",
   "displayName": "RC Panel",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A side panel that lists your Claude desktop sessions with Remote Control on and opens each one so you can turn it off there.",
   "author": {
     "name": "이원찬",

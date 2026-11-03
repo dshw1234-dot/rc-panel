@@ -84,6 +84,41 @@ test('켜진 세션만 보여 주고, 이동을 누르면 그 세션을 열 뿐 
   await ui.unmount()
 })
 
+test('이동은 Windows에서는 rundll32로, macOS에서는 open으로 세션 링크를 연다', async ($, on) => {
+  let os: string | undefined = 'Windows_NT'
+  const runs: string[][] = []
+  on('command.register', () => ({ value: { command: 'rc-panel' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('clock.every', () => ({ value: undefined }))
+  on('store.get', () => ({ value: undefined }))
+  on('env.get', (_, e) => ({ value: e.name === 'OS' ? os : undefined }))
+  on('tool.check', () => ({ decision: 'allow' as const }))
+  on('tool.call', (_, e) => ({
+    result: {},
+    text: JSON.stringify(e.tool === 'mcp__ccd_session_mgmt__get_session' ? SELF : LIST),
+  }))
+  on('process.run', (_, e) => {
+    runs.push([...e.argv])
+
+    return { value: { exitCode: 0, stdout: '', stderr: '' } as never }
+  })
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  await ui.press({ key: 'go:local_aa' })
+  await settle()
+  os = undefined
+  await ui.press({ key: 'go:local_aa' })
+  await settle()
+  expect(runs).toEqual([
+    ['rundll32', 'url.dll,FileProtocolHandler', 'claude://claude.ai/epitaxy/local_aa'],
+    ['open', 'claude://claude.ai/epitaxy/local_aa'],
+  ])
+  await ui.unmount()
+})
+
 test('설정에서 언어를 바꾸고 그 값을 기본값으로 저장한다', async ($, on) => {
   const stored: Record<string, unknown> = {}
   on('command.register', () => ({ value: { command: 'rc-panel' } }))
