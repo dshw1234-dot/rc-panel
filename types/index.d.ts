@@ -1,5 +1,5 @@
 export type Lang = 'ko' | 'en'
-export type NoteCode = 'loading' | 'empty' | 'readFailed' | 'offFailed'
+export type NoteCode = 'loading' | 'empty' | 'readFailed'
 
 export type RcRow = {
   id: string
@@ -16,8 +16,6 @@ declare module 'claude-code' {
       // 언어를 바꿔도 따라 바뀌도록 글 대신 종류를 둔다
       note: Shaped<NoteCode | null>
       isPaneOpen: boolean
-      // 끄는 중인 세션 id. 모두 끄기 중이면 '*'
-      busy: string | null
       lang: Lang
       isSettingsOpen: boolean
       isIconHidden: boolean

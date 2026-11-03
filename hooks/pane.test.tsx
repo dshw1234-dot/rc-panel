@@ -38,8 +38,9 @@ const LIST = [
 ]
 const SELF = { sessionId: 'local_dd', title: '이 세션', cwd: 'C:\\p\\AI공부', isRunning: true, remoteControlActive: true }
 
-test('켜진 세션만 보여 주고, 끄기를 누르면 그 세션을 끈다', async ($, on) => {
-  const turnedOff: unknown[] = []
+test('켜진 세션만 보여 주고, 이동을 누르면 그 세션을 열 뿐 끄지는 않는다', async ($, on) => {
+  const tools: string[] = []
+  const opened: string[] = []
   on('command.register', () => ({ value: { command: 'rc-panel' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('ui.panes', () => ({ value: [] }))
@@ -47,16 +48,17 @@ test('켜진 세션만 보여 주고, 끄기를 누르면 그 세션을 끈다',
   on('store.get', (_, e) => ({ value: e.key === 'lang' ? 'ko' : undefined }))
   on('tool.check', () => ({ decision: 'allow' as const }))
   on('tool.call', (_, e) => {
-    if (e.tool === 'mcp__ccd_session_mgmt__set_remote_control') {
-      turnedOff.push((e as { session_id?: unknown }).session_id)
-
-      return { result: {}, text: '"off"' }
-    }
+    tools.push(e.tool)
 
     return {
       result: {},
       text: JSON.stringify(e.tool === 'mcp__ccd_session_mgmt__get_session' ? SELF : LIST),
     }
+  })
+  on('process.run', (_, e) => {
+    opened.push(e.argv.at(-1) ?? '')
+
+    return { value: { exitCode: 0, stdout: '', stderr: '' } as never }
   })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
 
@@ -67,20 +69,18 @@ test('켜진 세션만 보여 주고, 끄기를 누르면 그 세션을 끈다',
   expect(await ui.find({ type: 'Text', text: /꺼진 세션/ })).toBe(undefined)
   expect((await ui.find({ type: 'Text', text: /todo-app/ }))?.text).toMatch(/^todo-app/)
 
-  await ui.press({ key: 'off:local_dd' })
+  // 지금 이 세션에는 이동 버튼이 없다
+  expect(await ui.find({ type: 'Button', key: 'go:local_dd' })).toBeFalsy()
+  expect((await ui.find({ type: 'Button', key: 'go:local_cc' }))?.props.label).toBe('이동')
+  await ui.press({ key: 'go:local_cc' })
   await settle()
-  await ui.press({ key: 'off:local_cc' })
-  await settle()
-  expect(turnedOff).toEqual(['self', 'local_cc'])
+  expect(opened).toEqual(['claude://claude.ai/epitaxy/local_cc'])
+  expect(tools).not.toContain('mcp__ccd_session_mgmt__set_remote_control')
 
-  // 모두 끄기는 설정창 안에 있다
-  expect(await ui.find({ type: 'Button', key: 'off-all' })).toBeFalsy()
+  // 모두 끄기도 없다
   await ui.press({ key: 'settings' })
   await settle()
-  turnedOff.length = 0
-  await ui.press({ key: 'off-all' })
-  await settle()
-  expect(turnedOff).toEqual(['self', 'local_aa', 'local_cc'])
+  expect(await ui.find({ type: 'Button', key: 'off-all' })).toBeFalsy()
   await ui.unmount()
 })
 
@@ -169,7 +169,13 @@ test('session-tree가 줄로 그린 상태 줄에서도 ◨ 바로 뒤에 RC를 
   await band.unmount()
 })
 
-test('예시 화면은 실제 세션 대신 예시를 보여 주고, 끄기를 눌러도 앱 도구를 부르지 않는다', async ($, on) => {
+test('예시 화면은 실제 세션 대신 예시를 보여 주고, 이동을 눌러도 아무 세션도 열지 않는다', async ($, on) => {
+  const opened: unknown[] = []
+  on('process.run', (_, e) => {
+    opened.push(e.argv)
+
+    return { value: { exitCode: 0, stdout: '', stderr: '' } as never }
+  })
   const called: string[] = []
   on('command.register', () => ({ value: { command: 'rc-panel' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
@@ -189,10 +195,10 @@ test('예시 화면은 실제 세션 대신 예시를 보여 주고, 끄기를 �
   expect(await ui.find({ type: 'Text', text: /켜진 세션/ })).toBeFalsy()
 
   called.length = 0
-  await ui.press({ key: 'off:demo-2' })
+  await ui.press({ key: 'go:demo-2' })
   await settle()
-  expect(await ui.find({ type: 'Text', text: /Fix the login redirect bug/ })).toBeFalsy()
   expect(called).toEqual([])
+  expect(opened).toEqual([])
 
   // 인자 없이 다시 열면 실제 세션으로 돌아온다
   await $.command.run({ command: 'rc-panel', args: '' } as never)

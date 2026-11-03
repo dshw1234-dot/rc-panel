@@ -9,9 +9,7 @@ const PANE = 'rc-panel'
 const TITLE = 'Remote Control'
 const LIST_TOOL = 'mcp__ccd_session_mgmt__list_sessions'
 const GET_TOOL = 'mcp__ccd_session_mgmt__get_session'
-const SET_TOOL = 'mcp__ccd_session_mgmt__set_remote_control'
 const REFRESH_MS = 60_000
-const ALL = '*'
 const GEAR = '⚙'
 const LANG_KEY = 'lang'
 const HIDE_ICON_KEY = 'hideIcon'
@@ -24,19 +22,15 @@ const BORDER = '#6F6E69'
 const rows = atom({ plugin: 'rc-panel', key: 'rows' } as const, [], {
   shape: 'rows-1',
 })
-// 0.1.0은 글을 그대로 담았다. 종류로 바꾸며 예전 값은 버린다.
+// 종류가 바뀔 때마다 shape를 올려 예전 값('offFailed' 등)은 버린다
 const note = atom(
   { plugin: 'rc-panel', key: 'note' } as const,
   'loading' as NoteCode | null,
-  { shape: 'note-2' },
+  { shape: 'note-3' },
 )
 const isPaneOpen = atom(
   { plugin: 'rc-panel', key: 'isPaneOpen' } as const,
   false as boolean,
-)
-const busy = atom(
-  { plugin: 'rc-panel', key: 'busy' } as const,
-  null as string | null,
 )
 const lang = atom({ plugin: 'rc-panel', key: 'lang' } as const, 'en' as Lang)
 const isSettingsOpen = atom(
@@ -151,36 +145,8 @@ async function quietRefresh($: EngineInterface) {
   await refresh($, true)
 }
 
-// 앱은 자기 세션을 'self'로 받는다
-async function turnOff($: EngineInterface, row: RcRow) {
-  if (isDemo) {
-    await update($, rows, list => list.filter(r => r.id !== row.id))
-
-    return
-  }
-  const result = await callTool(
-    $,
-    SET_TOOL,
-    { session_id: row.isCurrent ? 'self' : row.id, enabled: false },
-    false,
-  )
-  if (result === null) await update($, note, () => 'offFailed' as const)
-}
-
-async function turnOffOne($: EngineInterface, row: RcRow) {
-  await update($, busy, () => row.id)
-  await turnOff($, row)
-  await update($, busy, () => null)
-  if (!isDemo) await refresh($, false)
-}
-
-async function turnOffAll($: EngineInterface) {
-  await update($, busy, () => ALL)
-  for (const row of await read($, rows)) await turnOff($, row)
-  await update($, busy, () => null)
-  if (!isDemo) await refresh($, false)
-}
-
+// 끄기 버튼은 두지 않는다. mod가 쉬는 세션에서 set_remote_control을 부르면 앱이 승인 창을 띄우고,
+// 그 승인이 턴 밖이라 '작업 중' 시간 표시가 멈추지 않는다(데스크톱 4.4212). 그래서 그 세션으로 이동만 한다.
 async function openSession($: EngineInterface, id: string) {
   if (!/^local_[0-9a-f-]+$/.test(id)) return
   await $.process.run([
@@ -353,7 +319,6 @@ export const register: Register = on => {
     const { Box, Text, Button } = $.ui.resolve(e)
     const list = await read($, rows)
     const message = await read($, note)
-    const working = await read($, busy)
     const isOpen = await read($, isSettingsOpen)
     const isHidingIcon = await read($, isIconHidden)
     const t = STRINGS[await read($, lang)]
@@ -378,11 +343,6 @@ export const register: Register = on => {
             <Box flexDirection="row" flexWrap="wrap">
               <Button key="language" label={t.otherLanguage} onPress={() => background(toggleLang($))} />
               <Button key="refresh" label={t.refresh} onPress={() => background(refresh($, false))} />
-              <Button
-                key="off-all"
-                label={working === ALL ? t.working : t.offAll}
-                onPress={() => background(turnOffAll($))}
-              />
               <Button
                 key="icon"
                 label={isHidingIcon ? t.showIcon : t.hideIcon}
@@ -413,11 +373,9 @@ export const register: Register = on => {
                 {row.isCurrent && <Text color={CURRENT_COLOR}> · {t.here}</Text>}
               </Text>
             </Box>
-            <Button
-              key={`off:${row.id}`}
-              label={working === row.id || working === ALL ? t.working : t.off}
-              onPress={() => background(turnOffOne($, row))}
-            />
+            {!row.isCurrent && (
+              <Button key={`go:${row.id}`} label={t.go} onPress={() => background(openSession($, row.id))} />
+            )}
           </Box>
         ))}
         <Text dimColor>{t.footer}</Text>
