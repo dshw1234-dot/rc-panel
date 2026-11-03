@@ -2,6 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderElement, RenderNode } from 'claude-code'
 
 import type { Lang, NoteCode, RcRow } from '../types'
+import { demoRows } from './demo'
 import { STRINGS } from './strings'
 
 const PANE = 'rc-panel'
@@ -122,7 +123,16 @@ async function callTool(
   }
 }
 
+// `/rc-panel demo`로 연 동안은 예시만 보여 주고 앱 도구를 부르지 않는다
+let isDemo = false
+
 async function refresh($: EngineInterface, isQuiet: boolean) {
+  if (isDemo) {
+    if (!isQuiet) await update($, rows, () => demoRows())
+    await update($, note, () => null)
+
+    return
+  }
   const listText = await callTool($, LIST_TOOL, { limit: 500 }, isQuiet)
   if (listText === null) {
     if (!isQuiet) await update($, note, () => 'readFailed' as const)
@@ -143,6 +153,11 @@ async function quietRefresh($: EngineInterface) {
 
 // 앱은 자기 세션을 'self'로 받는다
 async function turnOff($: EngineInterface, row: RcRow) {
+  if (isDemo) {
+    await update($, rows, list => list.filter(r => r.id !== row.id))
+
+    return
+  }
   const result = await callTool(
     $,
     SET_TOOL,
@@ -156,14 +171,14 @@ async function turnOffOne($: EngineInterface, row: RcRow) {
   await update($, busy, () => row.id)
   await turnOff($, row)
   await update($, busy, () => null)
-  await refresh($, false)
+  if (!isDemo) await refresh($, false)
 }
 
 async function turnOffAll($: EngineInterface) {
   await update($, busy, () => ALL)
   for (const row of await read($, rows)) await turnOff($, row)
   await update($, busy, () => null)
-  await refresh($, false)
+  if (!isDemo) await refresh($, false)
 }
 
 async function openSession($: EngineInterface, id: string) {
@@ -291,10 +306,12 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: 'rc-panel' }, async $ => {
+  on('command.run', { command: 'rc-panel' }, async ($, e) => {
     await start($)
+    // `/rc-panel demo`는 실제 세션 대신 예시 데이터를 보여 준다 (스크린샷용)
+    isDemo = e.args.trim() === 'demo'
     const t = STRINGS[await read($, lang)]
-    if (await closeIfOpen($)) return { text: t.closed }
+    if (!isDemo && (await closeIfOpen($))) return { text: t.closed }
     await openPane($)
 
     return { text: t.opened }

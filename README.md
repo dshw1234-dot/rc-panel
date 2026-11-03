@@ -4,6 +4,8 @@
 
 A side panel for the Claude desktop app that shows which of your sessions have Remote Control on, and turns Remote Control off for one session or for all of them. Remote Control is switched on session by session, so it is easy to lose track of which sessions are still reachable from your phone or claude.ai. RC Panel puts them in one list.
 
+It is a Claude Code mod: it runs inside the desktop app and needs no server, account or API key.
+
 ## Features
 
 - **One list:** every session on this computer with Remote Control on, this session first.
@@ -14,6 +16,8 @@ A side panel for the Claude desktop app that shows which of your sessions have R
 - **Korean and English:** the language you pick is remembered.
 
 The list refreshes itself every minute.
+
+To try it without touching your real sessions, type `/rc-panel demo`. It shows sample sessions, and its buttons change nothing in the app.
 
 ## Install
 
@@ -36,11 +40,20 @@ Open a new session, and click `RC` below the prompt or type `/rc-panel`. The ⚙
 ## What it reads and sends
 
 - **Tools it calls itself.** The mod calls three of the desktop app's own session tools, never any other tool:
-  - `mcp__ccd_session_mgmt__list_sessions` and `mcp__ccd_session_mgmt__get_session` (with `self`), to read which sessions have Remote Control on. It calls them when a session starts, every minute, when you open the panel and when you press **Refresh**. The minute-by-minute refresh first asks the permission check and skips the call unless the tool is already allowed, so it never opens a permission prompt.
+  - `mcp__ccd_session_mgmt__list_sessions` and `mcp__ccd_session_mgmt__get_session` (with `self`), to read which sessions have Remote Control on. It calls them when a session starts, every minute, when you open the panel and when you press **Refresh**. The minute-by-minute refresh first asks the permission check and skips the call unless the tool is already allowed, so it never opens a permission prompt. In `/rc-panel demo` it calls none of them.
   - `mcp__ccd_session_mgmt__set_remote_control` with `enabled: false`, only when you press **Turn off** or **Turn all off**. The app asks you to approve each change. The mod never turns Remote Control on.
 - **The one program it starts.** When you click a session's title, it runs `rundll32 url.dll,FileProtocolHandler claude://claude.ai/epitaxy/<session id>`, the Windows way to open a `claude://` link, so the desktop app shows that session. The session id must look like `local_` followed by letters, digits and dashes, or nothing runs.
 - **What it sends.** Nothing leaves your computer: the mod makes no network requests and never calls the model, so it uses no tokens. What it reads (session titles, folders, running state) stays in the panel.
 - **Hooks.** It hooks `ui.close` only to notice that its own panel was closed, then passes the event on unchanged. It adds one command, `/rc-panel`, and draws a button in the footer below the prompt, leaving whatever other mods draw there in place.
+
+## Limitations
+
+- **Claude desktop app only.** The session tools it uses exist only there, so the panel stays empty in a plain terminal.
+- **Tested on Windows only,** with Claude Code 2.1.314. Opening a session by clicking its title uses a Windows command, so it does nothing on macOS or Linux; the list and the off buttons should work there but have not been tried.
+
+## See also
+
+- [Session Tree](https://github.com/dshw1234-dot/session-tree): a side panel that draws your desktop sessions as a family tree, grouped by folder. Its ◨ button sits next to `RC` below the prompt.
 
 ## License
 

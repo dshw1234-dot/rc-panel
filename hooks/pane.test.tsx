@@ -168,3 +168,35 @@ test('session-tree가 줄로 그린 상태 줄에서도 ◨ 바로 뒤에 RC를 
   expect(await band.find({ type: 'Text', text: /모드/ })).toBeTruthy()
   await band.unmount()
 })
+
+test('예시 화면은 실제 세션 대신 예시를 보여 주고, 끄기를 눌러도 앱 도구를 부르지 않는다', async ($, on) => {
+  const called: string[] = []
+  on('command.register', () => ({ value: { command: 'rc-panel' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('clock.every', () => ({ value: undefined }))
+  on('store.get', () => ({ value: undefined }))
+  on('tool.check', () => ({ decision: 'allow' as const }))
+  on('tool.call', (_, e) => {
+    called.push(e.tool)
+
+    return { result: {}, text: JSON.stringify(e.tool === 'mcp__ccd_session_mgmt__get_session' ? SELF : LIST) }
+  })
+
+  await $.command.run({ command: 'rc-panel', args: 'demo' } as never)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await ui.find({ type: 'Text', text: /Plan the v2 release/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /켜진 세션/ })).toBeFalsy()
+
+  called.length = 0
+  await ui.press({ key: 'off:demo-2' })
+  await settle()
+  expect(await ui.find({ type: 'Text', text: /Fix the login redirect bug/ })).toBeFalsy()
+  expect(called).toEqual([])
+
+  // 인자 없이 다시 열면 실제 세션으로 돌아온다
+  await $.command.run({ command: 'rc-panel', args: '' } as never)
+  await $.command.run({ command: 'rc-panel', args: '' } as never)
+  expect(await ui.find({ type: 'Text', text: /켜진 세션/ })).toBeTruthy()
+  await ui.unmount()
+})
