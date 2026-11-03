@@ -1,7 +1,7 @@
 {
   "name": "rc-panel",
   "displayName": "RC Panel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A side panel that lists your Claude desktop sessions with Remote Control on, and turns them off one by one or all at once.",
   "author": {
     "name": "이원찬",
@@ -10,5 +10,8 @@
   "homepage": "https://github.com/dshw1234-dot/rc-panel",
   "repository": "https://github.com/dshw1234-dot/rc-panel",
   "license": "MIT",
+  "privacyPolicyUrl": "https://github.com/dshw1234-dot/rc-panel#what-it-reads-and-sends",
+  "supportUrl": "https://github.com/dshw1234-dot/rc-panel/issues",
+  "documentationUrl": "https://github.com/dshw1234-dot/rc-panel#readme",
   "types": "./types/index.d.ts"
 }
