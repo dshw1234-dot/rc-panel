@@ -60,10 +60,10 @@ function parseJson(text: string): unknown {
   try {
     return JSON.parse(text)
   } catch {
-    const start = text.search(/[[{]/)
-    if (start < 0) return null
+    const at = text.search(/[[{]/)
+    if (at < 0) return null
     try {
-      return JSON.parse(text.slice(start))
+      return JSON.parse(text.slice(at))
     } catch {
       return null
     }
